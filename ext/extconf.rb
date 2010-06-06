@@ -5,4 +5,4 @@ load config_file if File.exist?(config_file)
 
 # Temporary: to turn off optimization
 # $CFLAGS='-fno-strict-aliasing -g -fPIC'
-create_makefile("parsetree19")
+create_makefile("parse_tree")
