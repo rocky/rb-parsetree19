@@ -13,7 +13,7 @@ RUBY_PATH = File.join(Config::CONFIG['bindir'],
 
 SO_NAME = 'parsetree19.so'
 
-PACKAGE_VERSION = open("ext/thread_frame.c") do |f| 
+PACKAGE_VERSION = open("ext/parse_tree.c") do |f| 
   f.grep(/^#define PARSETREE19_VERSION/).first[/"(.+)"/,1]
 end
 
@@ -94,7 +94,7 @@ end
 desc 'Generate rdoc documentation'
 Rake::RDocTask.new('rdoc') do |rdoc|
   rdoc.rdoc_dir = 'doc/rdoc'
-  rdoc.title    = 'rb-threadframe'
+  rdoc.title    = 'parsetree19'
   # Show source inline with line numbers
   rdoc.options << '--inline-source' << '--line-numbers'
   # Make the readme file the start page for the generated html
@@ -105,13 +105,13 @@ end
 
 # Base GEM Specification
 spec = Gem::Specification.new do |spec|
-  spec.name = "rb-threadframe"
+  spec.name = "parsetree19"
   
   spec.homepage = "http://github.com/rocky/rb-parsetree19/tree/master"
   spec.summary = "Frame introspection"
   spec.description = <<-EOF
 
-rb-threadframe gives introspection access for frames of a thread.
+rb-parsetree is the C extension part of ParseTree for Ruby 1.9.
 EOF
 
   spec.version = PACKAGE_VERSION
@@ -129,8 +129,7 @@ EOF
   
   # rdoc
   spec.has_rdoc = true
-  spec.extra_rdoc_files = ['README.md', 'threadframe.rd'] + 
-                           FileList['ext/*.c']
+  spec.extra_rdoc_files = ['README.md'] + FileList['ext/*.c']
 end
 
 # Rake task to build the default package
