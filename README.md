@@ -1,4 +1,4 @@
-# rb-threadframe19
+# rb-parsetree19
 
 A C extension to support ParseTree in Ruby 1.9
 
