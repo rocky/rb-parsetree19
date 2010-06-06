@@ -3,11 +3,43 @@
 #include "../include/vm_core_mini.h"   /* Pulls in ruby.h and node.h */
 #include "../include/ruby19_externs.h" 
 
-static VALUE
-add_to_parse_tree(VALUE self, VALUE ary, NODE *node)
+#define D_NULL_NODE wrap_into_node("nil", Qnil);
+
+#define D_NODE_HEADER(node)						\
+    current = rb_ary_new();						\
+    node_name = ID2SYM(rb_intern(ruby_node_name(nd_type(node))));	\
+    rb_ary_push(ary, current);						\
+    rb_ary_push(current, node_name);
+
+static VALUE 
+wrap_into_node(const char * name, VALUE val) 
 {
+    VALUE n = rb_ary_new();
+    rb_ary_push(n, ID2SYM(rb_intern(name)));
+    if (val) rb_ary_push(n, val);
+    return n;
+}
+
+static VALUE
+add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
+{
+    VALUE current = Qnil;
+    VALUE node_name;
+    if (!node) {
+	return D_NULL_NODE;
+    }
+
+    D_NODE_HEADER(node);
+
+    switch (nd_type(node)) {
+      case NODE_SCOPE:
+	add_to_parse_tree(self, current, node->nd_next, node->nd_tbl);
+	break;
+      default:
+	rb_bug("dump_node: unknown node: %s", ruby_node_name(nd_type(node)));
+    }
     /* FIXME */
-    return Qnil;
+    return current;
 }
 
 static VALUE 
@@ -54,7 +86,7 @@ parse_tree_common(VALUE self, VALUE source, VALUE filename, VALUE line,
     if (Qfalse == tree)
 	result = rb_parser_dump_tree(node, 0);
     else
-	result = add_to_parse_tree(self, result, node);
+	result = add_to_parse_tree(self, result, node, NULL);
     return (result);
 
 }
