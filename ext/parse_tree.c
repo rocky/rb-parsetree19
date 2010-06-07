@@ -3,6 +3,11 @@
 #include "../include/vm_core_mini.h"   /* Pulls in ruby.h and node.h */
 #include "../include/ruby19_externs.h" 
 
+/* node name as a C string. It will start with "NODE_",
+   e.g. "NODE_NIL" */
+#define NODE_NAME(node)				\
+    ruby_node_name(nd_type(node))
+
 /* The below is a merger of dump_node() of Ruby 1.9's node.c and
    add_to_parse_tree() of ParseTree's parsetree.rb
 
@@ -10,16 +15,25 @@
    but try to do corresponding ParseTree actions.
 */
 
+#define AR(str) str
+
+#define A_LIT(lit) AR(rb_inspect(lit))
+
 #define ANN(ann)    /* Discard annotation */
 #define LAST_NODE   /* Ignore adjustment of node-placement indentation. */
 
 #define D_NULL_NODE wrap_into_node("NODE_NIL", Qnil)
 
+/* Note: not completely sure if we should keep this, modifiy it slightly
+   or use just the expansion inline. */
 #define D_NODE_HEADER(node)						\
     current = rb_ary_new();						\
-    node_name = pt_node_name(ruby_node_name(nd_type(node)));		\
+    node_name = pt_node_name(NODE_NAME(node));				\
     rb_ary_push(ary, current);						\
     rb_ary_push(current, node_name);
+
+#define F_LIT(name, ann) \
+    rb_ary_push(current, node->name)
 
 #define F_NODE(name, local) \
     add_to_parse_tree(self, current, node->name, local)
@@ -64,6 +78,24 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
     D_NODE_HEADER(node);
 
     switch (nd_type(node)) {
+
+      case NODE_LIT:
+	ANN("literal");
+	ANN("format: [nd_lit]");
+	ANN("example: 1, /foo/");
+	goto lit;
+      case NODE_STR:
+	ANN("string literal");
+	ANN("format: [nd_lit]");
+	ANN("example: 'foo'");
+	goto lit;
+      case NODE_XSTR:
+	ANN("xstring literal");
+	ANN("format: [nd_lit]");
+	ANN("example: `foo`");
+	lit:
+	F_LIT(nd_lit, "literal");
+	break;
 
       case NODE_NIL:
 	ANN("nil");
