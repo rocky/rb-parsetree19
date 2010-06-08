@@ -11,8 +11,8 @@
 /* The below is a merger of dump_node() of Ruby 1.9's node.c and
    add_to_parse_tree() of ParseTree's parsetree.rb
 
-   As such the macros below may seem weird because they are from node.c
-   but try to do corresponding ParseTree actions.
+   As such, the macros below may seem weird because they are from node.c
+   They try to do corresponding ParseTree actions.
 */
 
 #define AR(str) str
@@ -35,7 +35,7 @@
 #define F_LIT(name, ann) \
     rb_ary_push(current, node->name)
 
-#define F_NODE(name, local) \
+#define F_NODE(name, ann, local)			\
     add_to_parse_tree(self, current, node->name, local)
 
 
@@ -75,7 +75,12 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	return D_NULL_NODE;
     }
 
-    D_NODE_HEADER(node);
+    /* D_NODE_HEADER(node); */
+    current = rb_ary_new();
+    node_name = pt_node_name(NODE_NAME(node));
+    rb_ary_push(ary, current);
+    rb_ary_push(current, node_name);
+
 
     switch (nd_type(node)) {
 
@@ -95,6 +100,45 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: `foo`");
 	lit:
 	F_LIT(nd_lit, "literal");
+	break;
+
+      case NODE_DSTR:
+	ANN("string literal with interpolation");
+	ANN("format: [nd_lit]");
+	ANN("example: \"foo#{ bar }baz\"");
+	goto dlit;
+      case NODE_DXSTR:
+	ANN("xstring literal with interpolation");
+	ANN("format: [nd_lit]");
+	ANN("example: `foo#{ bar }baz`");
+	goto dlit;
+      case NODE_DREGX:
+	ANN("regexp literal with interpolation");
+	ANN("format: [nd_lit]");
+	ANN("example: /foo#{ bar }baz/");
+	goto dlit;
+      case NODE_DREGX_ONCE:
+	ANN("regexp literal with interpolation and once flag");
+	ANN("format: [nd_lit]");
+	ANN("example: /foo#{ bar }baz/o");
+	goto dlit;
+      case NODE_DSYM:
+	ANN("symbol literal with interpolation");
+	ANN("format: [nd_lit]");
+	ANN("example: :\"foo#{ bar }baz\"");
+	dlit:
+	F_LIT(nd_lit, "literal");
+	F_NODE(nd_next->nd_head, "preceding string", NULL);
+	LAST_NODE;
+	F_NODE(nd_next->nd_next, "interpolation", NULL);
+	break;
+
+      case NODE_EVSTR:
+	ANN("interpolation expression");
+	ANN("format: \"..#{ [nd_lit] }..\"");
+	ANN("example: \"foo#{ bar }baz\"");
+	LAST_NODE;
+	F_NODE(nd_body, "body", NULL);
 	break;
 
       case NODE_NIL:
@@ -118,9 +162,9 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
       case NODE_SCOPE:
 	ANN("new scope");
 	ANN("format: [nd_tbl]: local table, [nd_args]: arguments, [nd_body]: body");
-	F_NODE(nd_args, node->nd_tbl);
+	F_NODE(nd_args, "arguments", node->nd_tbl);
 	LAST_NODE;
-	F_NODE(nd_body, node->nd_tbl);
+	F_NODE(nd_body, "body", node->nd_tbl);
 	break;
       default:
 	rb_bug("dump_node: unknown node: %s", ruby_node_name(nd_type(node)));

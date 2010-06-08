@@ -7,12 +7,17 @@ class TestParseTree < Test::Unit::TestCase
   end
 
   def test_parse_tree_for_str
-    [['nil',   [:scope, [:nil]]],
-     ['true',  [:scope, [:true]]],
-     ['false', [:scope, [:false]]],
-     ['5',     [:scope, [:lit, 5]]],
-     ["'5'",   [:scope, [:str, '5']]],
-     ['%x(5)', [:scope, [:xstr, '5']]]
+    [['nil',     [:scope, [:nil]]],
+     ['true',    [:scope, [:true]]],
+     ['false',   [:scope, [:false]]],
+     ['5',       [:scope, [:lit, 5]]],
+     ["'5'",     [:scope, [:str, '5']]],
+     ['%x(5)',   [:scope, [:xstr, '5']]],
+     ['"#{5}"',  [:scope, [:dstr, nil, [:evstr, [:lit, 5]]]]],
+     ['`#{5}`',  [:scope, [:dxstr, nil, [:evstr, [:lit, 5]]]]],
+     ['/#{5}/',  [:scope, [:dregx, '', [:evstr, [:lit, 5]]]]],
+     ['/#{5}/o', [:scope, [:dregx_once, '', [:evstr, [:lit, 5]]]]],
+     [':"#{5}"', [:scope, [:dsym, nil, [:evstr, [:lit, 5]]]]],
     ].each do |test_str, expected|
       actual   = @processor.parse_tree_for_str test_str, '(string)', 1
       assert_equal expected, actual
