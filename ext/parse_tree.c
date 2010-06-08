@@ -32,12 +32,14 @@
     rb_ary_push(ary, current);						\
     rb_ary_push(current, node_name);
 
-#define F_LIT(name, ann) \
+#define F_LIT(name, ann)			\
     rb_ary_push(current, node->name)
 
-#define F_NODE(name, ann, local)			\
-    add_to_parse_tree(self, current, node->name, local)
+#define F_ID(name, ann)					\
+    rb_ary_push(current, ID2SYM(node->name))
 
+#define F_NODE(name, ann, locals)			\
+    add_to_parse_tree(self, current, node->name, locals)
 
 /* Turn a Ruby node string, e.g. "NODE_FALSE" into a symbol that ParseTree
    uses, e.g. :false. */
@@ -83,6 +85,84 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 
 
     switch (nd_type(node)) {
+
+      case NODE_REDO:
+	ANN("redo statement");
+	ANN("format: redo");
+	ANN("example: redo");
+	break;
+
+      case NODE_RETRY:
+	ANN("retry statement");
+	ANN("format: retry");
+	ANN("example: retry");
+	break;
+
+      case NODE_LASGN:
+	ANN("local variable assignment");
+	ANN("format: [nd_vid](lvar) = [nd_value]");
+	ANN("example: x = foo");
+	goto asgn;
+      case NODE_DASGN:
+	ANN("dynamic variable assignment (out of current scope)");
+	ANN("format: [nd_vid](dvar) = [nd_value]");
+	ANN("example: x = nil; 1.times { x = foo }");
+	goto asgn;
+      case NODE_DASGN_CURR:
+	ANN("dynamic variable assignment (in current scope)");
+	ANN("format: [nd_vid](current dvar) = [nd_value]");
+	ANN("example: 1.times { x = foo }");
+	goto asgn;
+      case NODE_IASGN:
+	ANN("instance variable assignment");
+	ANN("format: [nd_vid](ivar) = [nd_value]");
+	ANN("example: @x = foo");
+	goto asgn;
+      case NODE_CVASGN:
+	ANN("class variable assignment");
+	ANN("format: [nd_vid](cvar) = [nd_value]");
+	ANN("example: @@x = foo");
+	asgn:
+	F_ID(nd_vid, "variable");
+	LAST_NODE;
+	F_NODE(nd_value, "rvalue", NULL);
+	break;
+
+      case NODE_YIELD:
+	ANN("yield invocation");
+	ANN("format: yield [nd_head]");
+	ANN("example: yield 1");
+	LAST_NODE;
+	F_NODE(nd_head, "arguments", NULL);
+	break;
+
+      case NODE_LVAR:
+	ANN("local variable reference");
+	ANN("format: [nd_vid](lvar)");
+	ANN("example: x");
+	goto var;
+      case NODE_DVAR:
+	ANN("dynamic variable reference");
+	ANN("format: [nd_vid](dvar)");
+	ANN("example: 1.times { x = 1; x }");
+	goto var;
+      case NODE_IVAR:
+	ANN("instance variable reference");
+	ANN("format: [nd_vid](ivar)");
+	ANN("example: @x");
+	goto var;
+      case NODE_CONST:
+	ANN("constant reference");
+	ANN("format: [nd_vid](constant)");
+	ANN("example: X");
+	goto var;
+      case NODE_CVAR:
+	ANN("class variable reference");
+	ANN("format: [nd_vid](cvar)");
+	ANN("example: @@x");
+        var:
+	F_ID(nd_vid, "local variable");
+	break;
 
       case NODE_LIT:
 	ANN("literal");
@@ -141,6 +221,12 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_body, "body", NULL);
 	break;
 
+      case NODE_SELF:
+	ANN("self");
+	ANN("format: self");
+	ANN("example: self");
+	break;
+
       case NODE_NIL:
 	ANN("nil");
 	ANN("format: nil");
@@ -157,6 +243,29 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("false");
 	ANN("format: false");
 	ANN("example: false");
+	break;
+
+      case NODE_COLON2:
+	ANN("scoped constant reference");
+	ANN("format: [nd_head]::[nd_mid]");
+	ANN("example: M::C");
+	F_ID(nd_mid, "constant name");
+	LAST_NODE;
+	F_NODE(nd_head, "receiver", NULL);
+	break;
+
+      case NODE_COLON3:
+	ANN("top-level constant reference");
+	ANN("format: ::[nd_mid]");
+	ANN("example: ::Object");
+	F_ID(nd_mid, "constant name");
+	break;
+
+      case NODE_DEFINED:
+	ANN("defined? expression");
+	ANN("format: defined?([nd_head])");
+	ANN("example: defined?(foo)");
+	F_NODE(nd_head, "expr", NULL);
 	break;
 
       case NODE_SCOPE:
