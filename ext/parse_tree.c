@@ -128,6 +128,21 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_value, "rvalue", NULL);
 	break;
 
+      case NODE_OP_ASGN_AND:
+	ANN("assignment with && operator");
+	ANN("format: [nd_head] &&= [nd_value]");
+	ANN("example: foo &&= bar");
+	goto asgn_andor;
+      case NODE_OP_ASGN_OR:
+	ANN("assignment with || operator");
+	ANN("format: [nd_head] ||= [nd_value]");
+	ANN("example: foo ||= bar");
+	asgn_andor:
+	F_NODE(nd_head, "variable", NULL);
+	LAST_NODE;
+	F_NODE(nd_value, "rvalue", NULL);
+	break;
+
       case NODE_YIELD:
 	ANN("yield invocation");
 	ANN("format: yield [nd_head]");

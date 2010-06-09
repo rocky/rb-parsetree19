@@ -19,6 +19,11 @@ class TestParseTree < Test::Unit::TestCase
      ['@x = 5',      [:scope, [:iasgn,  :@x,  [:lit, 5]]]],
      ['@@x = 5',     [:scope, [:cvasgn, :@@x, [:lit, 5]]]],
 
+     ['x &&= 1',     [:scope, [:op_asgn_and,  
+                               [:lvar, :x], [:lasgn, :x, [:lit, 1]]]]],
+     ['x ||= 1',     [:scope, [:op_asgn_or,   
+                               [:lvar, :x], [:lasgn, :x, [:lit, 1]]]]],
+
      ['yield',       [:scope, [:yield]]],
 
      # lvar: x 
