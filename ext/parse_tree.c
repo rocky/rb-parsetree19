@@ -38,6 +38,9 @@
 #define F_ID(name, ann)					\
     rb_ary_push(current, ID2SYM(node->name))
 
+#define F_GENTRY(name, ann) \
+    rb_ary_push(current, ID2SYM((node->name)->id))
+
 #define F_NODE(name, ann, locals)			\
     add_to_parse_tree(self, current, node->name, locals)
 
@@ -177,6 +180,13 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: @@x");
         var:
 	F_ID(nd_vid, "local variable");
+	break;
+
+      case NODE_GVAR:
+	ANN("global variable reference");
+	ANN("format: [nd_entry](gvar)");
+	ANN("example: $x");
+	F_GENTRY(nd_entry, "global variable");
 	break;
 
       case NODE_LIT:
