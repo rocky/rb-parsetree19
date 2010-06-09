@@ -86,8 +86,26 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
     rb_ary_push(ary, current);
     rb_ary_push(current, node_name);
 
-
     switch (nd_type(node)) {
+
+      case NODE_BREAK:
+	ANN("for statement");
+	ANN("format: break [nd_stts]");
+	ANN("example: break 1");
+	goto jump;
+      case NODE_NEXT:
+	ANN("next statement");
+	ANN("format: next [nd_stts]");
+	ANN("example: next 1");
+	goto jump;
+      case NODE_RETURN:
+	ANN("return statement");
+	ANN("format: return [nd_stts]");
+	ANN("example: return 1");
+        jump:
+	LAST_NODE;
+	F_NODE(nd_stts, "value", NULL);
+	break;
 
       case NODE_REDO:
 	ANN("redo statement");
