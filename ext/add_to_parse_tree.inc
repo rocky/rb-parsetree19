@@ -64,6 +64,25 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 
     switch (nd_type(node)) {
 
+      case NODE_BLOCK:
+	ANN("statement sequence");
+	ANN("format: [nd_head]; [nd_next]");
+	ANN("example: foo; bar");
+	F_NODE(nd_head, "current statement");
+	LAST_NODE;
+	F_NODE(nd_next, "next block");
+	break;
+
+      case NODE_IF:
+	ANN("if statement");
+	ANN("format: if [nd_cond] then [nd_body] else [nd_else] end");
+	ANN("example: if x == 1 then foo else bar end");
+	F_NODE(nd_cond, "condition expr");
+	F_NODE(nd_body, "then clause");
+	LAST_NODE;
+	F_NODE(nd_else, "else clause");
+	break;
+
       case NODE_BREAK:
 	ANN("for statement");
 	ANN("format: break [nd_stts]");
@@ -274,6 +293,31 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: \"foo#{ bar }baz\"");
 	LAST_NODE;
 	F_NODE(nd_body, "body");
+	break;
+
+      case NODE_ALIAS:
+	ANN("method alias statement");
+	ANN("format: alias [u1.node] [u2.node]");
+	ANN("example: alias bar foo");
+	F_NODE(u1.node, "new name");
+	LAST_NODE;
+	F_NODE(u2.node, "old name");
+	break;
+
+      case NODE_VALIAS:
+	ANN("global variable alias statement");
+	ANN("format: alias [u1.id](gvar) [u2.id](gvar)");
+	ANN("example: alias $y $x");
+	F_ID(u1.id, "new name");
+	F_ID(u2.id, "old name");
+	break;
+
+      case NODE_UNDEF:
+	ANN("method alias statement");
+	ANN("format: undef [u2.node]");
+	ANN("example: undef foo");
+	LAST_NODE;
+	F_NODE(u2.node, "old name");
 	break;
 
       case NODE_SELF:
