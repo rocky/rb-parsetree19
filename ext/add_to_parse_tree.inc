@@ -17,6 +17,7 @@
 
 #define AR(str) str
 
+#define A_INT(val) (val)
 #define A_LIT(lit) AR(rb_inspect(lit))
 
 #define ANN(ann)    /* Discard annotation */
@@ -81,6 +82,50 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_body, "then clause");
 	LAST_NODE;
 	F_NODE(nd_else, "else clause");
+	break;
+
+      case NODE_CASE:
+	ANN("case statement");
+	ANN("format: case [nd_head]; [nd_body]; end");
+	ANN("example: case x; when 1; foo; when 2; bar; else baz; end");
+	F_NODE(nd_head, "case expr");
+	LAST_NODE;
+	F_NODE(nd_body, "when clauses");
+	break;
+
+      case NODE_WHEN:
+	ANN("if statement");
+	ANN("format: when [nd_head]; [nd_body]; (when or else) [nd_next]");
+	ANN("example: case x; when 1; foo; when 2; bar; else baz; end");
+	F_NODE(nd_head, "when value");
+	F_NODE(nd_body, "when clause");
+	LAST_NODE;
+	F_NODE(nd_next, "next when clause");
+	break;
+
+      case NODE_OPT_N:
+	ANN("wrapper for -n option");
+	ANN("format: ruby -ne '[nd_body]' (nd_cond is `gets')");
+	ANN("example: ruby -ne 'p $_'");
+	goto loop;
+      case NODE_WHILE:
+	ANN("while statement");
+	ANN("format: while [nd_cond]; [nd_body]; end");
+	ANN("example: while x == 1; foo; end");
+	goto loop;
+      case NODE_UNTIL:
+	ANN("until statement");
+	ANN("format: until [nd_cond]; [nd_body]; end");
+	ANN("example: until x == 1; foo; end");
+      loop:
+	rb_ary_push(current, (node->nd_state == 0) ? Qfalse : Qtrue);
+	F_NODE_LOCALS(nd_cond, "condition", locals);
+	LAST_NODE;
+	if (node->nd_body) {
+	    add_to_parse_tree(self, current,  node->nd_body, locals);
+	} else {
+	    rb_ary_push(current, Qnil);
+	}
 	break;
 
       case NODE_ITER:
@@ -169,6 +214,15 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: @@x = foo");
 	asgn:
 	F_ID(nd_vid, "variable");
+	LAST_NODE;
+	F_NODE(nd_value, "rvalue");
+	break;
+
+      case NODE_GASGN:
+	ANN("global variable assignment");
+	ANN("format: [nd_entry](gvar) = [nd_value]");
+	ANN("example: $x = foo");
+	F_GENTRY(nd_entry, "global variable");
 	LAST_NODE;
 	F_NODE(nd_value, "rvalue");
 	break;
@@ -351,6 +405,31 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: undef foo");
 	LAST_NODE;
 	F_NODE(u2.node, "old name");
+	break;
+
+      case NODE_DOT2:
+	ANN("range constructor (incl.)");
+	ANN("format: [nd_beg]..[nd_end]");
+	ANN("example: 1..5");
+	goto dot;
+      case NODE_DOT3:
+	ANN("range constructor (excl.)");
+	ANN("format: [nd_beg]...[nd_end]");
+	ANN("example: 1...5");
+	goto dot;
+      case NODE_FLIP2:
+	ANN("flip-flop condition (incl.)");
+	ANN("format: [nd_beg]..[nd_end]");
+	ANN("example: if (x==1)..(x==5); foo; end");
+	goto dot;
+      case NODE_FLIP3:
+	ANN("flip-flop condition (excl.)");
+	ANN("format: [nd_beg]...[nd_end]");
+	ANN("example: if (x==1)...(x==5); foo; end");
+	dot:
+	F_NODE(nd_beg, "begin");
+	LAST_NODE;
+	F_NODE(nd_end, "end");
 	break;
 
       case NODE_SELF:
