@@ -83,6 +83,20 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_else, "else clause");
 	break;
 
+      case NODE_ITER:
+	ANN("method call with block");
+	ANN("format: [nd_iter] { [nd_body] }");
+	ANN("example: 3.times { foo }");
+	goto iter;
+      case NODE_FOR:
+	ANN("for statement");
+	ANN("format: for * in [nd_iter] do [nd_body] end");
+	ANN("example: for i in 1..3 do foo end");
+	iter:
+	F_NODE(nd_iter, "iteration receiver");
+	LAST_NODE;
+	F_NODE(nd_body, "body");
+	break;
       case NODE_BREAK:
 	ANN("for statement");
 	ANN("format: break [nd_stts]");
@@ -172,6 +186,25 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_head, "variable");
 	LAST_NODE;
 	F_NODE(nd_value, "rvalue");
+	break;
+
+      case NODE_CALL:
+	ANN("method invocation");
+	ANN("format: [nd_recv].[nd_mid]([nd_args])");
+	ANN("example: obj.foo(1)");
+	F_ID(nd_mid, "method id");
+	F_NODE(nd_recv, "receiver");
+	LAST_NODE;
+	F_NODE(nd_args, "arguments");
+	break;
+
+      case NODE_FCALL:
+	ANN("function call");
+	ANN("format: [nd_mid]([nd_args])");
+	ANN("example: foo(1)");
+	F_ID(nd_mid, "method id");
+	LAST_NODE;
+	F_NODE(nd_args, "arguments");
 	break;
 
       case NODE_VCALL:
