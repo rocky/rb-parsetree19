@@ -173,6 +173,43 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: retry");
 	break;
 
+      case NODE_BEGIN:
+	ANN("begin statement");
+	ANN("format: begin; [nd_body]; end");
+	ANN("example: begin; 1; end");
+	LAST_NODE;
+	F_NODE(nd_body, "body");
+	break;
+
+      case NODE_RESCUE:
+	ANN("rescue clause");
+	ANN("format: begin; [nd_body]; (rescue) [nd_resq]; else [nd_else]; end");
+	ANN("example: begin; foo; rescue; bar; else; baz; end");
+	F_NODE(nd_head, "body");
+	F_NODE(nd_resq, "rescue clause list");
+	LAST_NODE;
+	F_NODE(nd_else, "rescue else clause");
+	break;
+
+      case NODE_RESBODY:
+	ANN("rescue clause (cont'd)");
+	ANN("format: rescue [nd_args]; [nd_body]; (rescue) [nd_head]");
+	ANN("example: begin; foo; rescue; bar; else; baz; end");
+	F_NODE(nd_args, "rescue exceptions");
+	F_NODE(nd_body, "rescue clause");
+	LAST_NODE;
+	F_NODE(nd_head, "next rescue clause");
+	break;
+
+      case NODE_ENSURE:
+	ANN("ensure clause");
+	ANN("format: begin; [nd_head]; ensure; [nd_ensr]; end");
+	ANN("example: begin; foo; ensure; bar; end");
+	F_NODE(nd_head, "body");
+	LAST_NODE;
+	F_NODE(nd_ensr, "ensure clause");
+	break;
+
       case NODE_AND:
 	ANN("&& operator");
 	ANN("format: [nd_1st] && [nd_2nd]");

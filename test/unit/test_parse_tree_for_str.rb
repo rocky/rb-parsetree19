@@ -42,9 +42,26 @@ class TestParseTree < Test::Unit::TestCase
      ['redo',          [:scope, [:redo]]],
      ['retry',         [:scope, [:retry]]],
 
+     # begin
+     ['begin; 1 ; end', 
+      [:scope, [:block, [:begin], [:block, [:lit, 1]]]]],
+
+     # rescue and resbody
+     ['begin; 1 ; rescue; 2; else 3; end',
+      [:scope, [:rescue, [:block, [:begin], [:block, [:lit, 1]]], 
+                [:resbody, [:lit, 2]], [:lit, 3]]]],
+
+     # ensure
+     ['begin; 1 ; ensure; 2; end',
+      [:scope, [:ensure, [:block, [:begin], [:block, [:lit, 1]]], 
+                [:block, [:begin], [:block, [:lit, 2]]]]]],
+
+     # and
      ['true and nil',  [:scope, [:and, [:true], [:nil]]]],
+     # or
      ['true or false', [:scope, [:or,  [:true], [:false]]]],
 
+     # lasgn
      ['x = 5',         [:scope, [:lasgn,  :x,   [:lit, 5]]]],
      # dasgn:
      ['x = nil; 1.times { x = 5 }',
