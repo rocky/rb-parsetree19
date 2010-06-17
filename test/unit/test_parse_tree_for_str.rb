@@ -83,6 +83,9 @@ class TestParseTree < Test::Unit::TestCase
      ['x ||= 1',     [:scope, [:op_asgn_or,   
                                [:lvar, :x], [:lasgn, :x, [:lit, 1]]]]],
 
+     # op_asgn1
+     # 'ary[1] += 2'
+
      # call:
      ['x.foo',         [:scope, [:call, :foo, [:vcall, :x]]]],
        
@@ -91,6 +94,12 @@ class TestParseTree < Test::Unit::TestCase
      ['foo',           [:scope, [:vcall, :foo]]],
 
      ['super',         [:scope, [:zsuper]]],
+
+     # zarray
+     ['[]',            [:scope, [:zarray]]],
+
+     # hash
+     ['{}',            [:scope, [:hash]]],
 
      ['yield',         [:scope, [:yield]]],
 

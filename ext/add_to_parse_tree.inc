@@ -279,6 +279,17 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_value, "rvalue");
 	break;
 
+      case NODE_OP_ASGN1:
+	ANN("array assignment with operator");
+	ANN("format: [nd_value] [ [nd_args->nd_body] ] [nd_vid]= [nd_args->nd_head]");
+	ANN("example: ary[1] += foo");
+	F_NODE(nd_recv, "receiver");
+	F_ID(nd_vid, "operator");
+	F_NODE(nd_args->nd_body, "index");
+	LAST_NODE;
+	F_NODE(nd_args->nd_head, "rvalue");
+	break;
+
       case NODE_CALL:
 	ANN("method invocation");
 	ANN("format: [nd_recv].[nd_mid]([nd_args])");
@@ -317,6 +328,20 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("super invocation with no argument");
 	ANN("format: super");
 	ANN("example: super");
+	break;
+
+      case NODE_ZARRAY:
+	ANN("empty array constructor");
+	ANN("format: []");
+	ANN("example: []");
+	break;
+
+      case NODE_HASH:
+	ANN("hash constructor");
+	ANN("format: { [nd_head] }");
+	ANN("example: { 1 => 2, 3 => 4 }");
+	LAST_NODE;
+	F_NODE(nd_head, "contents");
 	break;
 
       case NODE_YIELD:
