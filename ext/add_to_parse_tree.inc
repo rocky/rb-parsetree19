@@ -17,8 +17,9 @@
 
 #define AR(str) str
 
-#define A_INT(val) (val)
-#define A_LIT(lit) AR(rb_inspect(lit))
+#define A_INT(val) (INT2FIX(val))
+#define A_LONG(val) (INT2FIX(val))
+#define A_LIT(lit)  (lit)
 
 #define ANN(ann)    /* Discard annotation */
 #define LAST_NODE   /* Ignore adjustment of node-placement indentation. */
@@ -33,8 +34,11 @@
     rb_ary_push(ary, current);						\
     rb_ary_push(current, node_name);
 
+#define F_LONG(name, ann)			\
+    rb_ary_push(current, A_LONG(node->name))
+
 #define F_LIT(name, ann)			\
-    rb_ary_push(current, node->name)
+    rb_ary_push(current, A_LIT(node->name))
 
 #define F_ID(name, ann)					\
     rb_ary_push(current, ID2SYM(node->name))
@@ -322,6 +326,22 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: super 1");
 	LAST_NODE;
 	F_NODE(nd_args, "arguments");
+	break;
+
+      case NODE_ARRAY:
+	ANN("array constructor");
+	ANN("format: [ [nd_head], [nd_next].. ] (length: [nd_alen])");
+	ANN("example: [1, 2, 3]");
+	goto ary;
+      case NODE_VALUES:
+	ANN("return arguments");
+	ANN("format: [ [nd_head], [nd_next].. ] (length: [nd_alen])");
+	ANN("example: return 1, 2, 3");
+	ary:
+	F_LONG(nd_alen, "length");
+	F_NODE(nd_head, "element");
+	LAST_NODE;
+	F_NODE(nd_next, "next element");
 	break;
 
       case NODE_ZSUPER:

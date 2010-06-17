@@ -95,6 +95,11 @@ class TestParseTree < Test::Unit::TestCase
 
      ['super',         [:scope, [:zsuper]]],
 
+     # array
+     ['[1]',           [:scope, [:array, 1, [:lit, 1]]]],
+
+     # values array 1st item is not predictable.
+
      # zarray
      ['[]',            [:scope, [:zarray]]],
 
