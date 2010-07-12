@@ -17,11 +17,13 @@ PACKAGE_VERSION = open("ext/parse_tree.c") do |f|
   f.grep(/^#define PARSETREE19_VERSION/).first[/"(.+)"/,1]
 end
 
-EXT_FILES    = FileList[%w(ext/*.c ext/*.h)]
-LIB_FILES    = FileList['lib/*.rb']
-TEST_FILES   = FileList['test/*/*.rb']
-COMMON_FILES = FileList[%w(README.md Rakefile)]
-ALL_FILES    = COMMON_FILES + LIB_FILES + EXT_FILES + TEST_FILES
+EXT_FILES     = FileList[%w(ext/*.c ext/*.h)]
+INCLUDE_FILES = FileList['include/*.h']
+LIB_FILES     = FileList['lib/*.rb']
+TEST_FILES    = FileList['test/*/*.rb']
+COMMON_FILES  = FileList[%w(README.md Rakefile)]
+ALL_FILES     = COMMON_FILES + INCLUDE_FILES + LIB_FILES + EXT_FILES + 
+  TEST_FILES
 
 desc 'Create the core thread-frame shared library extension'
 task :ext do
