@@ -18,6 +18,7 @@
 #define A(str) rb_str_new2(str)
 #define AR(str) str
 
+#define A_ID(id) add_id(id)
 #define A_INT(val) (INT2FIX(val))
 #define A_LONG(val) (INT2FIX(val))
 #define A_LIT(lit)  (lit)
@@ -26,6 +27,12 @@
 #define LAST_NODE   /* Ignore adjustment of node-placement indentation. */
 
 #define D_NULL_NODE wrap_into_node("NODE_NIL", Qnil)
+
+#define F_CUSTOM1(name, ann, block)			\
+    block
+
+#define F_CUSTOM2(name, ann, block)			\
+    block
 
 /* Note: not completely sure if we should keep this, modifiy it slightly
    or use just the expansion inline. */
@@ -44,9 +51,6 @@
 #define F_MSG(name, ann, desc)	                \
     rb_ary_push(current, A(desc))
 
-#define F_CUSTOM1(name, ann, block)			\
-    block
-
 #define F_ID(name, ann)					\
     rb_ary_push(current, ID2SYM(node->name))
 
@@ -58,6 +62,23 @@
 
 #define F_NODE_LOCALS(name, ann, locals)			\
     add_to_parse_tree(self, current, node->name, locals)
+
+static void
+add_id(ID id)
+{
+    if (id == 0) {
+	A("(null)");
+    }
+    else {
+	VALUE str = rb_id2str(id);
+	if (str) {
+	    A(":"); AR(rb_id2str(id));
+	}
+	else {
+	    A("(internal variable)");
+	}
+    }
+}
 
 static VALUE
 add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
@@ -281,21 +302,6 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_value, "rvalue");
 	break;
 
-      case NODE_OP_ASGN_AND:
-	ANN("assignment with && operator");
-	ANN("format: [nd_head] &&= [nd_value]");
-	ANN("example: foo &&= bar");
-	goto asgn_andor;
-      case NODE_OP_ASGN_OR:
-	ANN("assignment with || operator");
-	ANN("format: [nd_head] ||= [nd_value]");
-	ANN("example: foo ||= bar");
-	asgn_andor:
-	F_NODE(nd_head, "variable");
-	LAST_NODE;
-	F_NODE(nd_value, "rvalue");
-	break;
-
       case NODE_GASGN:
 	ANN("global variable assignment");
 	ANN("format: [nd_entry](gvar) = [nd_value]");
@@ -348,6 +354,21 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	   default: A_ID(node->nd_next->nd_mid);
 	   }
 	});
+	LAST_NODE;
+	F_NODE(nd_value, "rvalue");
+	break;
+
+      case NODE_OP_ASGN_AND:
+	ANN("assignment with && operator");
+	ANN("format: [nd_head] &&= [nd_value]");
+	ANN("example: foo &&= bar");
+	goto asgn_andor;
+      case NODE_OP_ASGN_OR:
+	ANN("assignment with || operator");
+	ANN("format: [nd_head] ||= [nd_value]");
+	ANN("example: foo ||= bar");
+	asgn_andor:
+	F_NODE(nd_head, "variable");
 	LAST_NODE;
 	F_NODE(nd_value, "rvalue");
 	break;
@@ -739,6 +760,12 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: false");
 	break;
 
+      case NODE_ERRINFO:
+	ANN("virtual reference to $!");
+	ANN("format: rescue => id");
+	ANN("example: rescue => id");
+	break;
+
       case NODE_DEFINED:
 	ANN("defined? expression");
 	ANN("format: defined?([nd_head])");
@@ -746,13 +773,132 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_head, "expr");
 	break;
 
+      case NODE_POSTEXE:
+	ANN("post-execution");
+	ANN("format: END { [nd_body] }");
+	ANN("example: END { foo }");
+	LAST_NODE;
+	F_NODE(nd_body, "END clause");
+	break;
+
+      case NODE_ATTRASGN:
+	ANN("attr assignment");
+	ANN("format: [nd_recv].[nd_mid] = [nd_args]");
+	ANN("example: struct.field = foo");
+	if (node->nd_recv == (NODE *) 1) {
+	    F_MSG(nd_recv, "receiver", "1 (self)");
+	}
+	else {
+	    F_NODE(nd_recv, "receiver");
+	}
+	F_ID(nd_mid, "method name");
+	LAST_NODE;
+	F_NODE(nd_args, "arguments");
+	break;
+
+      case NODE_PRELUDE:
+	ANN("pre-execution");
+	ANN("format: BEGIN { [nd_head] }; [nd_body]");
+	ANN("example: bar; BEGIN { foo }");
+	F_NODE(nd_head, "prelude");
+	LAST_NODE;
+	F_NODE(nd_body, "body");
+	break;
+
+      case NODE_LAMBDA:
+	ANN("lambda expression");
+	ANN("format: -> [nd_body]");
+	ANN("example: -> { foo }");
+	LAST_NODE;
+	F_NODE(nd_body, "lambda clause");
+	break;
+
+      case NODE_OPT_ARG:
+	ANN("optional arguments");
+	ANN("format: def method_name([nd_body=some], [nd_next..])");
+	ANN("example: def foo(a, b=1, c); end");
+	F_NODE(nd_body, "body");
+	LAST_NODE;
+	F_NODE(nd_next, "next");
+	break;
+
+      case NODE_POSTARG:
+	ANN("post arguments");
+	ANN("format: *[nd_1st], [nd_2nd..] = ..");
+	ANN("example: a, *rest, z = foo");
+	if ((VALUE)node->nd_1st != (VALUE)-1) {
+	    F_NODE(nd_1st, "rest argument");
+	}
+	else {
+	    F_MSG(nd_1st, "rest argument", "-1 (rest argument without name)");
+	}
+	LAST_NODE;
+	F_NODE(nd_2nd, "post arguments");
+	break;
+
+      case NODE_ARGS_AUX:
+	ANN("method parameters (cont'd)");
+	F_CUSTOM1(nd_rest, "rest argument", {
+	    if (node->nd_rest == 1) A("nil (with last comma)");
+	    else A_ID(node->nd_rest);
+	});
+	F_CUSTOM1(nd_body, "block argument", { A_ID((ID)node->nd_body); });
+	LAST_NODE;
+	F_CUSTOM2(nd_next, "aux info 2", {
+	    node = node->nd_next;
+	    if (!node) {
+		D_NULL_NODE;
+	    }
+	    else {
+		D_NODE_HEADER(node);
+		ANN("method parameters (cont'd)");
+		F_ID(nd_pid, "first post argument");
+		F_LONG(nd_plen, "post argument length");
+		LAST_NODE;
+		F_CUSTOM2(nd_next, "aux info 3", {
+		    node = node->nd_next;
+		    if (!node) {
+			D_NULL_NODE;
+		    }
+		    else {
+			D_NODE_HEADER(node);
+			ANN("method parameters (cont'd)");
+			F_NODE(nd_1st, "init arguments (m)");
+			LAST_NODE;
+			F_NODE(nd_2nd, "init arguments (p)");
+		    }
+		});
+	    }
+	});
+	break;
+
+      case NODE_ARGS:
+	ANN("method parameters");
+	ANN("format: def method_name(.., [nd_opt=some], *[nd_rest], [nd_pid], .., &[nd_body])");
+	ANN("example: def foo(a, b, opt1=1, opt2=2, *rest, y, z, &blk); end");
+	F_LONG(nd_frml, "argc");
+	F_NODE(nd_next, "aux info 1");
+	LAST_NODE;
+	F_NODE(nd_opt, "optional arguments");
+	break;
+
       case NODE_SCOPE:
 	ANN("new scope");
 	ANN("format: [nd_tbl]: local table, [nd_args]: arguments, [nd_body]: body");
-	F_NODE_LOCALS(nd_args, "arguments", node->nd_tbl);
+	F_CUSTOM1(nd_tbl, "local table", {
+	   ID *tbl = node->nd_tbl;
+	   int i;
+	   int size = tbl ? (int)*tbl++ : 0;
+	   if (size == 0) A("(empty)");
+	   for (i = 0; i < size; i++) {
+		A_ID(tbl[i]); if (i < size - 1) A(",");
+	   }
+	});
+	F_NODE(nd_args, "arguments");
 	LAST_NODE;
-	F_NODE_LOCALS(nd_body, "body", node->nd_tbl);
+	F_NODE(nd_body, "body");
 	break;
+
       default:
 	rb_bug("dump_node: unknown node: %s", ruby_node_name(nd_type(node)));
     }

@@ -44,13 +44,9 @@ parse_tree_for_node(VALUE self, NODE *node, VALUE tree)
     return (result);
 }
 
-/* Defined in Ruby 1.9 proc.c */
-extern rb_iseq_t *rb_method_get_iseq(VALUE method);
-
 static VALUE 
-parse_tree_for_method(VALUE self, VALUE method, VALUE tree)
+parse_tree_for_iseq_internal(VALUE self, rb_iseq_t *iseq, VALUE tree)
 {
-    rb_iseq_t *iseq = rb_method_get_iseq(method);
     VALUE result = rb_ary_new();
 
     if (iseq->tree_node) {
@@ -61,6 +57,26 @@ parse_tree_for_method(VALUE self, VALUE method, VALUE tree)
 	return (result);
     } else 
 	return Qnil;
+}
+
+static VALUE 
+parse_tree_for_iseq(VALUE self, VALUE iseqval, VALUE tree)
+{
+    rb_iseq_t *iseq;
+    VALUE result = rb_ary_new();
+
+    GetISeqPtr(iseqval, iseq);
+    parse_tree_for_iseq_internal(self, iseq, tree);
+}
+
+/* Defined in Ruby 1.9 proc.c */
+extern rb_iseq_t *rb_method_get_iseq(VALUE method);
+
+static VALUE 
+parse_tree_for_method(VALUE self, VALUE method, VALUE tree)
+{
+    rb_iseq_t *iseq = rb_method_get_iseq(method);
+    parse_tree_for_iseq_internal(self, iseq, tree);
 }
 
 static VALUE 
@@ -122,6 +138,8 @@ parse_tree_dump(VALUE self, VALUE source, VALUE filename, VALUE line)
 void Init_parse_tree(void) 
 {
     VALUE c = rb_define_class("ParseTree19", rb_cObject);
+    rb_define_method(c, "parse_tree_for_iseq", 
+		     (VALUE(*)(ANYARGS))parse_tree_for_iseq, 2);
     rb_define_method(c, "parse_tree_for_method", 
 		     (VALUE(*)(ANYARGS))parse_tree_for_method, 2);
     rb_define_method(c, "parse_tree_for_str", 

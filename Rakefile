@@ -62,14 +62,13 @@ end
 task :default => [:test]
 
 desc 'Test units - the smaller tests'
-task :'test:unit' => [:ext] do |t|
-  Rake::TestTask.new(:'test:unit') do |t|
-    t.libs << './ext'
-    t.test_files = FileList['test/unit/**/*.rb']
-    # t.pattern = 'test/**/*test-*.rb' # instead of above
-    t.verbose = true
-  end
+Rake::TestTask.new(:'test:unit') do |t|
+  t.libs << './ext'
+  t.test_files = FileList['test/unit/**/*.rb']
+  # t.pattern = 'test/**/*test-*.rb' # instead of above
+  t.verbose = true
 end
+task :'test:unit' => [:ext]
 
 desc 'Test everything - unit tests for now.'
 task :test do
