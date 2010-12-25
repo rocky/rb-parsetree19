@@ -1,5 +1,9 @@
 2010-12-25  rocky <rockyb@rubyforge.org>
 
+	* ChangeLog, NEWS, Rakefile: Administrivia for first release.
+
+2010-12-25  rocky <rockyb@rubyforge.org>
+
 	* Rakefile, ext/add_to_parse_tree.inc, ext/parse_tree.c,
 	test/unit/test_parse_tree_for_meth.rb: Finish Node parsing. Add
 	parse_tree_for_method and parse_tree_for_iseq.

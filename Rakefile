@@ -17,7 +17,7 @@ PACKAGE_VERSION = open("ext/parse_tree.c") do |f|
   f.grep(/^#define PARSETREE19_VERSION/).first[/"(.+)"/,1]
 end
 
-EXT_FILES     = FileList[%w(ext/*.c ext/*.h)]
+EXT_FILES     = FileList[%w(ext/*.c ext/*.h ext/*.inc)]
 INCLUDE_FILES = FileList['include/*.h']
 LIB_FILES     = FileList['lib/*.rb']
 TEST_FILES    = FileList['test/*/*.rb']
