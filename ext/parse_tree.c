@@ -33,6 +33,37 @@ wrap_into_node(const char * name, VALUE val)
 #include "add_to_parse_tree.inc" 
 
 static VALUE 
+parse_tree_for_node(VALUE self, NODE *node, VALUE tree)
+{
+    VALUE result = rb_ary_new();
+
+    if (Qfalse == tree)
+	result = rb_parser_dump_tree(node, 0);
+    else
+	result = add_to_parse_tree(self, result, node, NULL);
+    return (result);
+}
+
+/* Defined in Ruby 1.9 proc.c */
+extern rb_iseq_t *rb_method_get_iseq(VALUE method);
+
+static VALUE 
+parse_tree_for_method(VALUE self, VALUE method, VALUE tree)
+{
+    rb_iseq_t *iseq = rb_method_get_iseq(method);
+    VALUE result = rb_ary_new();
+
+    if (iseq->tree_node) {
+	if (Qfalse == tree)
+	    result = rb_parser_dump_tree(iseq->tree_node, 0);
+	else
+	    result = add_to_parse_tree(self, result, iseq->tree_node, NULL);
+	return (result);
+    } else 
+	return Qnil;
+}
+
+static VALUE 
 parse_tree_common(VALUE self, VALUE source, VALUE filename, VALUE line,
                   VALUE tree)
 {
@@ -73,12 +104,7 @@ parse_tree_common(VALUE self, VALUE source, VALUE filename, VALUE line,
     }
 #endif
 
-    if (Qfalse == tree)
-	result = rb_parser_dump_tree(node, 0);
-    else
-	result = add_to_parse_tree(self, result, node, NULL);
-    return (result);
-
+    return parse_tree_for_node(self, node, tree);
 }
 
 static VALUE 
@@ -96,10 +122,8 @@ parse_tree_dump(VALUE self, VALUE source, VALUE filename, VALUE line)
 void Init_parse_tree(void) 
 {
     VALUE c = rb_define_class("ParseTree19", rb_cObject);
-    /* Probably needs more changes to Ruby 1.9:
-    rb_define_method(c, "parse_tree_for_meth", 
-		     (VALUE(*)(ANYARGS))parse_tree_for_meth, 3);
-    */
+    rb_define_method(c, "parse_tree_for_method", 
+		     (VALUE(*)(ANYARGS))parse_tree_for_method, 2);
     rb_define_method(c, "parse_tree_for_str", 
 		     (VALUE(*)(ANYARGS))parse_tree_for_str, 3);
     rb_define_method(c, "parse_tree_dump", 

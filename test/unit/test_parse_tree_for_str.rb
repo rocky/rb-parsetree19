@@ -23,8 +23,8 @@ class TestParseTree < Test::Unit::TestCase
 
      # Need case, when, opt_n
 
-     ['5 while false', [:scope, [:while, true, [:false], [:lit, 5]]]],
-     ['4 until true',  [:scope, [:until, true, [:true], [:lit, 4]]]],
+     ['5 while false', [:scope, [:while, [:false], [:lit, 5]]]],
+     ['4 until true',  [:scope, [:until, [:true], [:lit, 4]]]],
      
      # iter:
      ['x { 5 }', 

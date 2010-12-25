@@ -15,6 +15,7 @@
    They try to do corresponding ParseTree actions.
 */
 
+#define A(str) rb_str_new2(str)
 #define AR(str) str
 
 #define A_INT(val) (INT2FIX(val))
@@ -39,6 +40,12 @@
 
 #define F_LIT(name, ann)			\
     rb_ary_push(current, A_LIT(node->name))
+
+#define F_MSG(name, ann, desc)	                \
+    rb_ary_push(current, A(desc))
+
+#define F_CUSTOM1(name, ann, block)			\
+    block
 
 #define F_ID(name, ann)					\
     rb_ary_push(current, ID2SYM(node->name))
@@ -122,14 +129,13 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("format: until [nd_cond]; [nd_body]; end");
 	ANN("example: until x == 1; foo; end");
       loop:
-	rb_ary_push(current, (node->nd_state == 0) ? Qfalse : Qtrue);
-	F_NODE_LOCALS(nd_cond, "condition", locals);
+	F_CUSTOM1(nd_state, "begin-end-while?", {
+	   A_INT((int)node->nd_state);
+	   A((node->nd_state == 1) ? " (while-end)" : " (begin-end-while)");
+	});
+	F_NODE(nd_cond, "condition");
 	LAST_NODE;
-	if (node->nd_body) {
-	    add_to_parse_tree(self, current,  node->nd_body, locals);
-	} else {
-	    rb_ary_push(current, Qnil);
-	}
+	F_NODE(nd_body, "body");
 	break;
 
       case NODE_ITER:
@@ -146,6 +152,7 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	LAST_NODE;
 	F_NODE(nd_body, "body");
 	break;
+
       case NODE_BREAK:
 	ANN("for statement");
 	ANN("format: break [nd_stts]");
@@ -229,6 +236,21 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_2nd, "right expr");
 	break;
 
+      case NODE_MASGN:
+	ANN("multiple assignment");
+	ANN("format: [nd_head], [nd_args] = [nd_value]");
+	ANN("example: a, b = foo");
+	F_NODE(nd_value, "rhsn");
+	F_NODE(nd_head, "lhsn");
+	if ((VALUE)node->nd_args != (VALUE)-1) {
+	    LAST_NODE;
+	    F_NODE(nd_args, "splatn");
+	}
+	else {
+	    F_MSG(nd_args, "splatn", "-1 (rest argument without name)");
+	}
+	break;
+
       case NODE_LASGN:
 	ANN("local variable assignment");
 	ANN("format: [nd_vid](lvar) = [nd_value]");
@@ -259,15 +281,6 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_value, "rvalue");
 	break;
 
-      case NODE_GASGN:
-	ANN("global variable assignment");
-	ANN("format: [nd_entry](gvar) = [nd_value]");
-	ANN("example: $x = foo");
-	F_GENTRY(nd_entry, "global variable");
-	LAST_NODE;
-	F_NODE(nd_value, "rvalue");
-	break;
-
       case NODE_OP_ASGN_AND:
 	ANN("assignment with && operator");
 	ANN("format: [nd_head] &&= [nd_value]");
@@ -283,6 +296,31 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_value, "rvalue");
 	break;
 
+      case NODE_GASGN:
+	ANN("global variable assignment");
+	ANN("format: [nd_entry](gvar) = [nd_value]");
+	ANN("example: $x = foo");
+	F_GENTRY(nd_entry, "global variable");
+	LAST_NODE;
+	F_NODE(nd_value, "rvalue");
+	break;
+
+      case NODE_CDECL:
+	ANN("constant declaration");
+	ANN("format: [nd_else]::[nd_vid](constant) = [nd_value]");
+	ANN("example: X = foo");
+	if (node->nd_vid) {
+	   F_ID(nd_vid, "variable");
+	   F_MSG(nd_else, "extension", "not used");
+	}
+	else {
+	   F_MSG(nd_vid, "variable", "0 (see extension field)");
+	   F_NODE(nd_else, "extension");
+	}
+	LAST_NODE;
+	F_NODE(nd_value, "rvalue");
+	break;
+
       case NODE_OP_ASGN1:
 	ANN("array assignment with operator");
 	ANN("format: [nd_value] [ [nd_args->nd_body] ] [nd_vid]= [nd_args->nd_head]");
@@ -292,6 +330,26 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_args->nd_body, "index");
 	LAST_NODE;
 	F_NODE(nd_args->nd_head, "rvalue");
+	break;
+
+      case NODE_OP_ASGN2:
+	ANN("attr assignment with operator");
+	ANN("format: [nd_value].[attr] [nd_next->nd_mid]= [nd_value]");
+	ANN("          where [attr] reader: [nd_next->nd_vid]");
+	ANN("                [attr] writer: [nd_next->nd_aid]");
+	ANN("example: struct.field += foo");
+	F_NODE(nd_recv, "receiver");
+	F_ID(nd_next->nd_vid, "reader");
+	F_ID(nd_next->nd_aid, "writer");
+	F_CUSTOM1(nd_next->nd_mid, "operator", {
+	   switch (node->nd_next->nd_mid) {
+	   case 0: A("0 (||)"); break;
+	   case 1: A("1 (&&)"); break;
+	   default: A_ID(node->nd_next->nd_mid);
+	   }
+	});
+	LAST_NODE;
+	F_NODE(nd_value, "rvalue");
 	break;
 
       case NODE_CALL:
@@ -328,6 +386,12 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_args, "arguments");
 	break;
 
+      case NODE_ZSUPER:
+	ANN("super invocation with no argument");
+	ANN("format: super");
+	ANN("example: super");
+	break;
+
       case NODE_ARRAY:
 	ANN("array constructor");
 	ANN("format: [ [nd_head], [nd_next].. ] (length: [nd_alen])");
@@ -342,12 +406,6 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_head, "element");
 	LAST_NODE;
 	F_NODE(nd_next, "next element");
-	break;
-
-      case NODE_ZSUPER:
-	ANN("super invocation with no argument");
-	ANN("format: super");
-	ANN("example: super");
 	break;
 
       case NODE_ZARRAY:
@@ -407,6 +465,51 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_GENTRY(nd_entry, "global variable");
 	break;
 
+      case NODE_NTH_REF:
+	ANN("nth special variable reference");
+	ANN("format: $[nd_nth]");
+	ANN("example: $1, $2, ..");
+	F_CUSTOM1(nd_nth, "variable", { A("$"); A_LONG(node->nd_nth); });
+	break;
+
+      case NODE_BACK_REF:
+	ANN("back special variable reference");
+	ANN("format: $[nd_nth]");
+	ANN("example: $&, $`, $', $+");
+	F_CUSTOM1(nd_nth, "variable", {
+	   char name[3];
+	   name[0] = '$';
+	   name[1] = node->nd_nth;
+	   name[2] = '\0';
+	   A(name);
+	});
+	break;
+
+      case NODE_MATCH:
+	ANN("match expression (against $_ implicitly)");
+        ANN("format: [nd_lit] (in condition)");
+	ANN("example: if /foo/; foo; end");
+	F_LIT(nd_lit, "regexp");
+	break;
+
+      case NODE_MATCH2:
+	ANN("match expression (regexp first)");
+        ANN("format: [nd_recv] =~ [nd_value]");
+	ANN("example: /foo/ =~ 'foo'");
+	F_NODE(nd_recv, "regexp (receiver)");
+	LAST_NODE;
+	F_NODE(nd_value, "string (argument)");
+	break;
+
+      case NODE_MATCH3:
+	ANN("match expression (regexp second)");
+        ANN("format: [nd_recv] =~ [nd_value]");
+	ANN("example: 'foo' =~ /foo/");
+	F_NODE(nd_recv, "string (receiver)");
+	LAST_NODE;
+	F_NODE(nd_value, "regexp (argument)");
+	break;
+
       case NODE_LIT:
 	ANN("literal");
 	ANN("format: [nd_lit]");
@@ -464,6 +567,60 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_body, "body");
 	break;
 
+      case NODE_ARGSCAT:
+	ANN("splat argument following arguments");
+	ANN("format: ..(*[nd_head], [nd_body..])");
+	ANN("example: foo(*ary, post_arg1, post_arg2)");
+	F_NODE(nd_head, "preceding array");
+	LAST_NODE;
+	F_NODE(nd_body, "following array");
+	break;
+
+      case NODE_ARGSPUSH:
+	ANN("splat argument following one argument");
+	ANN("format: ..(*[nd_head], [nd_body])");
+	ANN("example: foo(*ary, post_arg)");
+	F_NODE(nd_head, "preceding array");
+	LAST_NODE;
+	F_NODE(nd_body, "following element");
+	break;
+
+      case NODE_SPLAT:
+	ANN("splat argument");
+	ANN("format: *[nd_head]");
+	ANN("example: foo(*ary)");
+	LAST_NODE;
+	F_NODE(nd_head, "splat'ed array");
+	break;
+
+      case NODE_BLOCK_PASS:
+	ANN("arguments with block argument");
+	ANN("format: ..([nd_head], &[nd_body])");
+	ANN("example: foo(x, &blk)");
+	F_NODE(nd_head, "other arguments");
+	LAST_NODE;
+	F_NODE(nd_body, "block argument");
+	break;
+
+      case NODE_DEFN:
+	ANN("method definition");
+	ANN("format: def [nd_mid] [nd_defn]; end");
+	ANN("example; def foo; bar; end");
+	F_ID(nd_mid, "method name");
+	LAST_NODE;
+	F_NODE(nd_defn, "method definition");
+	break;
+
+      case NODE_DEFS:
+	ANN("singleton method definition");
+	ANN("format: def [nd_recv].[nd_mid] [nd_defn]; end");
+	ANN("example; def obj.foo; bar; end");
+	F_NODE(nd_recv, "receiver");
+	F_ID(nd_mid, "method name");
+	LAST_NODE;
+	F_NODE(nd_defn, "method definition");
+	break;
+
       case NODE_ALIAS:
 	ANN("method alias statement");
 	ANN("format: alias [u1.node] [u2.node]");
@@ -487,6 +644,50 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("example: undef foo");
 	LAST_NODE;
 	F_NODE(u2.node, "old name");
+	break;
+
+      case NODE_CLASS:
+	ANN("class definition");
+	ANN("format: class [nd_cpath] < [nd_super]; [nd_body]; end");
+	ANN("example: class C2 < C; ..; end");
+	F_NODE(nd_cpath, "class path");
+	F_NODE(nd_super, "superclass");
+	LAST_NODE;
+	F_NODE(nd_body, "class definition");
+	break;
+
+      case NODE_MODULE:
+	ANN("module definition");
+	ANN("format: module [nd_cpath]; [nd_body]; end");
+	ANN("example: module M; ..; end");
+	F_NODE(nd_cpath, "module path");
+	LAST_NODE;
+	F_NODE(nd_body, "module definition");
+	break;
+
+      case NODE_SCLASS:
+	ANN("singleton class definition");
+	ANN("format: class << [nd_recv]; [nd_body]; end");
+	ANN("example: class << obj; ..; end");
+	F_NODE(nd_recv, "receiver");
+	LAST_NODE;
+	F_NODE(nd_body, "singleton class definition");
+	break;
+
+      case NODE_COLON2:
+	ANN("scoped constant reference");
+	ANN("format: [nd_head]::[nd_mid]");
+	ANN("example: M::C");
+	F_ID(nd_mid, "constant name");
+	LAST_NODE;
+	F_NODE(nd_head, "receiver");
+	break;
+
+      case NODE_COLON3:
+	ANN("top-level constant reference");
+	ANN("format: ::[nd_mid]");
+	ANN("example: ::Object");
+	F_ID(nd_mid, "constant name");
 	break;
 
       case NODE_DOT2:
@@ -536,22 +737,6 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	ANN("false");
 	ANN("format: false");
 	ANN("example: false");
-	break;
-
-      case NODE_COLON2:
-	ANN("scoped constant reference");
-	ANN("format: [nd_head]::[nd_mid]");
-	ANN("example: M::C");
-	F_ID(nd_mid, "constant name");
-	LAST_NODE;
-	F_NODE(nd_head, "receiver");
-	break;
-
-      case NODE_COLON3:
-	ANN("top-level constant reference");
-	ANN("format: ::[nd_mid]");
-	ANN("example: ::Object");
-	F_ID(nd_mid, "constant name");
 	break;
 
       case NODE_DEFINED:
