@@ -1,5 +1,5 @@
 /* What release we got? */
-#define PARSETREE19_VERSION "0.1"  
+#define PARSETREE19_VERSION "0.2"  
 #include "../include/vm_core_mini.h"   /* Pulls in ruby.h and node.h */
 #include "../include/ruby19_externs.h" 
 

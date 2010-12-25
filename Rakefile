@@ -124,7 +124,7 @@ EOF
   spec.platform = Gem::Platform::RUBY
   spec.files = ALL_FILES.to_a  
 
-  spec.required_ruby_version = '>= 1.9.1'
+  spec.required_ruby_version = '~> 1.9.2frame'
   spec.date = Time.now
   # spec.rubyforge_project = 'rocky-hacks'
   

@@ -1,5 +1,9 @@
 2010-12-25  rocky <rockyb@rubyforge.org>
 
+	* ChangeLog, Rakefile: Need one more file...
+
+2010-12-25  rocky <rockyb@rubyforge.org>
+
 	* ChangeLog, NEWS, Rakefile: Administrivia for first release.
 
 2010-12-25  rocky <rockyb@rubyforge.org>
