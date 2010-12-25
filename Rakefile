@@ -21,7 +21,7 @@ EXT_FILES     = FileList[%w(ext/*.c ext/*.h)]
 INCLUDE_FILES = FileList['include/*.h']
 LIB_FILES     = FileList['lib/*.rb']
 TEST_FILES    = FileList['test/*/*.rb']
-COMMON_FILES  = FileList[%w(README.md Rakefile)]
+COMMON_FILES  = FileList[%w(README.md Rakefile NEWS ChangeLog)]
 ALL_FILES     = COMMON_FILES + INCLUDE_FILES + LIB_FILES + EXT_FILES + 
   TEST_FILES
 

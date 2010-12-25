@@ -1,0 +1,138 @@
+2010-12-25  rocky <rockyb@rubyforge.org>
+
+	* Rakefile, ext/add_to_parse_tree.inc, ext/parse_tree.c,
+	test/unit/test_parse_tree_for_meth.rb: Finish Node parsing. Add
+	parse_tree_for_method and parse_tree_for_iseq.
+
+2010-12-25  rocky <rockyb@rubyforge.org>
+
+	* ext/add_to_parse_tree.inc, ext/parse_tree.c,
+	test/unit/test_parse_tree_for_str.rb: Add parse_tree_for_method. Add
+	more nodes types.  New ones are largely untested. More work is
+	needed in a patched Rub to save method nodes
+
+2010-07-12  rocky <rockyb@rubyforge.org>
+
+	* Rakefile: Add include files to package/gem.
+
+2010-06-17  rocky <rockyb@rubyforge.org>
+
+	* ext/add_to_parse_tree.inc, test/unit/test_parse_tree_for_str.rb: 
+	Add nodes array and values. Warning: array alen doesn't look like a
+	fixnum for the first array alen. It's also the same way in node.c or
+	parse_tree_dump.
+
+2010-06-16  rocky <rockyb@rubyforge.org>
+
+	* ext/add_to_parse_tree.inc, test/unit/test_parse_tree_for_str.rb: 
+	Add nodes asgn1, zarray, and hash. Really need to add "array" next.
+
+
+2010-06-15  rocky <rockyb@rubyforge.org>
+
+	* ext/add_to_parse_tree.inc, test/unit/test_parse_tree_for_str.rb: 
+	Add 'begin', 'rescue', 'resbody', and 'ensure'
+
+2010-06-11  rocky <rockyb@rubyforge.org>
+
+	* ext/add_to_parse_tree.inc, test/unit/test_parse_tree_for_str.rb: 
+	Add nodes: case, when, opt_n, while, until, gasn, dot2, dot2, flip2,
+	and flip3. Some of these remain untested.
+
+2010-06-10  rocky <rockyb@rubyforge.org>
+
+	* ext/add_to_parse_tree.inc: Add nodes 'iter', 'for', 'call', and
+	'fcall'
+
+2010-06-10  rocky <rockyb@rubyforge.org>
+
+	* ext/add_to_parse_tree.inc: Add nodes block, if, alias, valias and
+	undef.
+
+2010-06-09  rocky <rockyb@rubyforge.org>
+
+	* ext/add_to_parse_tree.inc, ext/parse_tree.c: Add nodes 'and',
+	'or', 'zsuper', and 'vcall'. Split longish add_to_parse_tree()
+	routine into a separate file. F_NODE() now matches node.c's better.
+
+
+2010-06-09  rocky <rockyb@rubyforge.org>
+
+	* ext/parse_tree.c: Add "break", "next", and "return"
+
+2010-06-09  rocky <rockyb@rubyforge.org>
+
+	* ext/parse_tree.c: Add gvar
+
+2010-06-09  rocky <rockyb@rubyforge.org>
+
+	* ext/parse_tree.c, test/unit/test_parse_tree_for_str.rb: Add
+	op_asgn_and and opt_asgn_or
+
+2010-06-08  rocky <rockyb@rubyforge.org>
+
+	* test/unit/test_parse_tree_for_str.rb: Tests for new ops.
+
+2010-06-08  rocky <rockyb@rubyforge.org>
+
+	* ext/parse_tree.c: Add nilary opts: redo, retry, yield; some
+	variable assignments: lasgn, iasgn, cvasgn; variable and constant
+	refs: ivar, const, cvar, colon2, colon3 and 'defined?'.
+
+2010-06-07  rocky <rockyb@rubyforge.org>
+
+	* ext/parse_tree.c, include, test/unit/test_parse_tree_for_str.rb: 
+	Add the various kinds of string and regexp literals.
+
+2010-06-07  R. Bernstein <rocky@gnu.org>
+
+	* include: Submodule stuff again
+
+2010-06-07  R. Bernstein <rocky@gnu.org>
+
+	* .gitmodules: Change submodule URL
+
+2010-06-07  R. Bernstein <rocky@gnu.org>
+
+	* include: Correct submodule path
+
+2010-06-07  rocky <rockyb@rubyforge.org>
+
+	* Rakefile, ext/parse_tree.c, test/.gitignore,
+	test/unit/.gitignore, test/unit/test_parse_tree_for_str.rb: Add NODE
+	types 'lit', 'str', and 'xstr'. Start unit tests.
+
+2010-06-07  rocky <rockyb@rubyforge.org>
+
+	* ext/parse_tree.c: We now handle NODE_TRUE, NODE_FALSE and NODE_NIL
+	- woohoo!
+
+2010-06-06  rocky <rockyb@rubyforge.org>
+
+	* Rakefile: "rake" and "rake gem" should now work.
+
+2010-06-06  rocky <rockyb@rubyforge.org>
+
+	* ext/parse_tree.c: Start to fill in node handling to see what is
+	involved. Looks like a merge of code with node.c with parse_tree.rb
+
+
+2010-06-06  rocky <rockyb@rubyforge.org>
+
+	* README.md: Wrong name. This time for sure!
+
+2010-06-06  rocky <rockyb@rubyforge.org>
+
+	* ext/.gitignore, ext/extconf.rb, ext/parse_tree.c: Method
+	parse_tree_dump - a wrapper for the routine in Ruby 1.9 dump.
+	Interim but possibly an encouraging first step.
+
+2010-06-06  rocky <rockyb@rubyforge.org>
+
+	* .gitmodules, include: Add common Ruby 1.9 headers as a submodule.
+
+
+2010-06-06  r <rocky@static-71-183-236-17.nycmny.fios.verizon.net>
+
+	* Start ParseTree for Ruby 1.9 - C-extension part
+
