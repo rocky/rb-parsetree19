@@ -49,7 +49,7 @@ parse_tree_for_iseq_internal(VALUE self, rb_iseq_t *iseq, VALUE tree)
 {
     VALUE result = rb_ary_new();
 
-    if (iseq->tree_node) {
+    if (iseq && iseq->tree_node) {
 	if (Qfalse == tree)
 	    result = rb_parser_dump_tree(iseq->tree_node, 0);
 	else
