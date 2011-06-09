@@ -899,6 +899,20 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
 	F_NODE(nd_body, "body");
 	break;
 
+      case NODE_MEMO:
+	ANN("NODE MEMO");
+	ANN("format: filename, safe_level, 0");
+	rb_array_push(current, node->u1.value);
+	rb_array_push(current, node->u2.value);
+	rb_array_push(current, node->u3.value);
+	break;
+
+      case NODE_BLOCK_ARG:
+	ANN("NODE BLOCK ARG");
+	ANN("format: v 0, local_cnt(v)");
+	F_NODE(nd_head, "v");
+	break;
+
       default:
 	rb_bug("dump_node: unknown node: %s", ruby_node_name(nd_type(node)));
     }
