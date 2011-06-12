@@ -1,3 +1,24 @@
+2011-06-08  r <rocky@gnu.org>
+
+	* ext/add_to_parse_tree.inc: Add NODE_BLOCK and NODE_BLOCK_ARG.
+
+2011-06-08  r <rocky@gnu.org>
+
+	* ext/parse_tree.c: Guard against dereferencing NULL iseq pointer.
+
+2010-12-28  r <rocky@gnu.org>
+
+	* .gemspec, Rakefile, ext/parse_tree.c: Add .gemspec. bump version
+	number.
+
+2010-12-25  rocky <rockyb@rubyforge.org>
+
+	* README.md: Update README.md
+
+2010-12-25  rocky <rockyb@rubyforge.org>
+
+	* ChangeLog: See above.
+
 2010-12-25  rocky <rockyb@rubyforge.org>
 
 	* ChangeLog: Update README.md to include usage.

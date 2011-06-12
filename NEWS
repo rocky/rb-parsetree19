@@ -1,2 +1,7 @@
+June 12, 2011 (0.3)
+ Add NODE_BLOCK and NODE_BLOCK_ARG 
+ Guard against dereferening a NULL iseq pointer
+ Remove some gcc warnings
+
 December 25, 2010 (0.2)
  First public release

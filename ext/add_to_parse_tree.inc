@@ -902,9 +902,9 @@ add_to_parse_tree(VALUE self, VALUE ary, NODE *node, ID *locals)
       case NODE_MEMO:
 	ANN("NODE MEMO");
 	ANN("format: filename, safe_level, 0");
-	rb_array_push(current, node->u1.value);
-	rb_array_push(current, node->u2.value);
-	rb_array_push(current, node->u3.value);
+	rb_aray_push(current, node->u1.value);
+	rb_aray_push(current, node->u2.value);
+	rb_aray_push(current, node->u3.value);
 	break;
 
       case NODE_BLOCK_ARG:

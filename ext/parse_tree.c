@@ -1,5 +1,5 @@
 /* What release we got? */
-#define PARSETREE19_VERSION "0.3.dev"  
+#define PARSETREE19_VERSION "0.3"  
 #include "../include/vm_core_mini.h"   /* Pulls in ruby.h and node.h */
 #include "../include/ruby19_externs.h" 
 
@@ -63,10 +63,9 @@ static VALUE
 parse_tree_for_iseq(VALUE self, VALUE iseqval, VALUE tree)
 {
     rb_iseq_t *iseq;
-    VALUE result = rb_ary_new();
 
     GetISeqPtr(iseqval, iseq);
-    parse_tree_for_iseq_internal(self, iseq, tree);
+    return parse_tree_for_iseq_internal(self, iseq, tree);
 }
 
 /* Defined in Ruby 1.9 proc.c */
@@ -76,7 +75,7 @@ static VALUE
 parse_tree_for_method(VALUE self, VALUE method, VALUE tree)
 {
     rb_iseq_t *iseq = rb_method_get_iseq(method);
-    parse_tree_for_iseq_internal(self, iseq, tree);
+    return parse_tree_for_iseq_internal(self, iseq, tree);
 }
 
 static VALUE 
@@ -84,7 +83,6 @@ parse_tree_common(VALUE self, VALUE source, VALUE filename, VALUE line,
                   VALUE tree)
 {
     VALUE tmp;
-    VALUE result = rb_ary_new();
     NODE *node = NULL;
 
 #ifdef FIXED
