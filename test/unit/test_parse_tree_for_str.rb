@@ -3,7 +3,7 @@ require_relative '../../ext/parse_tree'
 
 class TestParseTree < Test::Unit::TestCase
   def setup
-    @processor = ParseTree19.new(false)
+    @processor = ParseTree19.new
   end
 
   def test_parse_tree_for_str
@@ -13,25 +13,25 @@ class TestParseTree < Test::Unit::TestCase
     # a given parse node to be created, see below.
     [
      # block:
-     ['foo; bar',      [:scope, [:block, [:vcall, :foo], 
+     ['foo; bar',      [:scope, [:block, [:vcall, :foo],
                                  [:block, [:vcall, :bar]]]]],
 
      # if:
      ['true if nil',   [:scope, [:if, [:nil], [:true]]]],
-     ['if nil then true else false end', 
+     ['if nil then true else false end',
       [:scope, [:if, [:nil], [:true], [:false]]]],
 
      # Need case, when, opt_n
 
      ['5 while false', [:scope, [:while, [:false], [:lit, 5]]]],
      ['4 until true',  [:scope, [:until, [:true], [:lit, 4]]]],
-     
+
      # iter:
-     ['x { 5 }', 
+     ['x { 5 }',
       [:scope, [:iter, [:fcall, :x], [:scope, [:lit, 5]]]]],
 
      # Need for
-       
+
      ['break',         [:scope, [:break]]],
      ['break 1',       [:scope, [:break, [:lit, 1]]]],
      ['next',          [:scope, [:next]]],
@@ -43,17 +43,17 @@ class TestParseTree < Test::Unit::TestCase
      ['retry',         [:scope, [:retry]]],
 
      # begin
-     ['begin; 1 ; end', 
+     ['begin; 1 ; end',
       [:scope, [:block, [:begin], [:block, [:lit, 1]]]]],
 
      # rescue and resbody
      ['begin; 1 ; rescue; 2; else 3; end',
-      [:scope, [:rescue, [:block, [:begin], [:block, [:lit, 1]]], 
+      [:scope, [:rescue, [:block, [:begin], [:block, [:lit, 1]]],
                 [:resbody, [:lit, 2]], [:lit, 3]]]],
 
      # ensure
      ['begin; 1 ; ensure; 2; end',
-      [:scope, [:ensure, [:block, [:begin], [:block, [:lit, 1]]], 
+      [:scope, [:ensure, [:block, [:begin], [:block, [:lit, 1]]],
                 [:block, [:begin], [:block, [:lit, 2]]]]]],
 
      # and
@@ -66,11 +66,11 @@ class TestParseTree < Test::Unit::TestCase
      # dasgn:
      ['x = nil; 1.times { x = 5 }',
       [:scope, [:block, [:lasgn, :x, [:nil]],
-                [:block, [:iter, [:call, :times, [:lit, 1]], 
+                [:block, [:iter, [:call, :times, [:lit, 1]],
                           [:scope, [:dasgn, :x, [:lit, 5]]]]]]]],
      # dasgn_cur:
      ['1.times { x = 5 }',
-      [:scope, [:iter, [:call, :times, [:lit, 1]], 
+      [:scope, [:iter, [:call, :times, [:lit, 1]],
                 [:scope, [:dasgn_curr, :x, [:lit, 5]]]]]],
 
      ['@x = 5',      [:scope, [:iasgn,  :@x,  [:lit, 5]]]],
@@ -78,9 +78,9 @@ class TestParseTree < Test::Unit::TestCase
 
      ['$x = 5',      [:scope, [:gasgn,  :$x,  [:lit, 5]]]],
 
-     ['x &&= 1',     [:scope, [:op_asgn_and,  
+     ['x &&= 1',     [:scope, [:op_asgn_and,
                                [:lvar, :x], [:lasgn, :x, [:lit, 1]]]]],
-     ['x ||= 1',     [:scope, [:op_asgn_or,   
+     ['x ||= 1',     [:scope, [:op_asgn_or,
                                [:lvar, :x], [:lasgn, :x, [:lit, 1]]]]],
 
      # op_asgn1
@@ -88,7 +88,7 @@ class TestParseTree < Test::Unit::TestCase
 
      # call:
      ['x.foo',         [:scope, [:call, :foo, [:vcall, :x]]]],
-       
+
      # For fcall, see iter above.
 
      ['foo',           [:scope, [:vcall, :foo]]],
@@ -110,10 +110,10 @@ class TestParseTree < Test::Unit::TestCase
 
      # For lvar, see x ||= 1
 
-     # dvar: 
+     # dvar:
      ['1.times { x = 1; x }',
-      [:scope, [:iter, [:call, :times, [:lit, 1]], 
-                [:scope, [:block, [:dasgn_curr, :x, [:lit, 1]], 
+      [:scope, [:iter, [:call, :times, [:lit, 1]],
+                [:scope, [:block, [:dasgn_curr, :x, [:lit, 1]],
                           [:block, [:dvar, :x]]]]]]],
 
      ['@x',            [:scope, [:ivar,  :@x]]],
@@ -137,11 +137,11 @@ class TestParseTree < Test::Unit::TestCase
 
      # dot2
      ['1..5.each{ 5 }',
-      [:scope, [:dot2, [:lit, 1], 
+      [:scope, [:dot2, [:lit, 1],
                 [:iter, [:call, :each, [:lit, 5]], [:scope, [:lit, 5]]]]]],
      # dot3
      ['1...5.each{ 5 }',
-      [:scope, [:dot3, [:lit, 1], 
+      [:scope, [:dot3, [:lit, 1],
                 [:iter, [:call, :each, [:lit, 5]], [:scope, [:lit, 5]]]]]],
 
      # Need flip2 and flip3

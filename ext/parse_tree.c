@@ -1,18 +1,18 @@
 /* What release we got? */
-#define PARSETREE19_VERSION "0.3"  
+#define PARSETREE19_VERSION "0.3"
 #include "../include/vm_core_mini.h"   /* Pulls in ruby.h and node.h */
-#include "../include/ruby19_externs.h" 
+#include "../include/ruby19_externs.h"
 
 /* Turn a Ruby node string, e.g. "NODE_FALSE" into a symbol that ParseTree
    uses, e.g. :false. */
-static VALUE 
+static VALUE
 pt_node_name(const char *name)
 {
-    if (0 == strncmp(name, "NODE_", strlen("NODE_"))) { 
+    if (0 == strncmp(name, "NODE_", strlen("NODE_"))) {
 	const char * name_sans_node = &name[strlen("NODE_")];
-	return 
+	return
 	    rb_funcall(
-		rb_funcall(rb_str_new2(name_sans_node), rb_intern("downcase"), 
+		rb_funcall(rb_str_new2(name_sans_node), rb_intern("downcase"),
 			   0),
 		rb_intern("to_sym"), 0);
     } else {
@@ -21,8 +21,8 @@ pt_node_name(const char *name)
     }
 }
 
-static VALUE 
-wrap_into_node(const char * name, VALUE val) 
+static VALUE
+wrap_into_node(const char * name, VALUE val)
 {
     VALUE n = rb_ary_new();
     rb_ary_push(n, pt_node_name(name));
@@ -30,55 +30,56 @@ wrap_into_node(const char * name, VALUE val)
     return n;
 }
 
-#include "add_to_parse_tree.inc" 
+#include "add_to_parse_tree.inc"
 
-static VALUE 
-parse_tree_for_node(VALUE self, NODE *node, VALUE tree)
+static VALUE
+parse_tree_for_node(VALUE self, NODE *node, VALUE /*bool*/ as_tree)
 {
     VALUE result = rb_ary_new();
 
-    if (Qfalse == tree)
+    if (Qfalse == as_tree)
 	result = rb_parser_dump_tree(node, 0);
     else
 	result = add_to_parse_tree(self, result, node, NULL);
     return (result);
 }
 
-static VALUE 
-parse_tree_for_iseq_internal(VALUE self, rb_iseq_t *iseq, VALUE tree)
+static VALUE
+parse_tree_for_iseq_internal(VALUE self, rb_iseq_t *iseq,
+			     /*bool*/ VALUE as_tree)
 {
     VALUE result = rb_ary_new();
 
     if (iseq && iseq->tree_node) {
-	if (Qfalse == tree)
+	if (Qfalse == as_tree)
 	    result = rb_parser_dump_tree(iseq->tree_node, 0);
 	else
 	    result = add_to_parse_tree(self, result, iseq->tree_node, NULL);
 	return (result);
-    } else 
+    } else
 	return Qnil;
 }
 
-static VALUE 
-parse_tree_for_iseq(VALUE self, VALUE iseqval, VALUE tree)
+static VALUE
+parse_tree_for_iseq(VALUE self, VALUE iseqval, /*Bool*/ VALUE as_tree)
 {
     rb_iseq_t *iseq;
 
     GetISeqPtr(iseqval, iseq);
-    return parse_tree_for_iseq_internal(self, iseq, tree);
+    return parse_tree_for_iseq_internal(self, iseq, as_tree);
 }
 
 /* Defined in Ruby 1.9 proc.c */
 extern rb_iseq_t *rb_method_get_iseq(VALUE method);
 
-static VALUE 
-parse_tree_for_method(VALUE self, VALUE method, VALUE tree)
+static VALUE
+parse_tree_for_method(VALUE self, VALUE method, VALUE as_tree)
 {
     rb_iseq_t *iseq = rb_method_get_iseq(method);
-    return parse_tree_for_iseq_internal(self, iseq, tree);
+    return parse_tree_for_iseq_internal(self, iseq, as_tree);
 }
 
-static VALUE 
+static VALUE
 parse_tree_common(VALUE self, VALUE source, VALUE filename, VALUE line,
                   VALUE tree)
 {
@@ -121,27 +122,27 @@ parse_tree_common(VALUE self, VALUE source, VALUE filename, VALUE line,
     return parse_tree_for_node(self, node, tree);
 }
 
-static VALUE 
-parse_tree_for_str(VALUE self, VALUE source, VALUE filename, VALUE line) 
+static VALUE
+parse_tree_for_str(VALUE self, VALUE source, VALUE filename, VALUE line)
 {
     return parse_tree_common(self, source, filename, line, Qtrue);
 }
 
-static VALUE 
-parse_tree_dump(VALUE self, VALUE source, VALUE filename, VALUE line) 
+static VALUE
+parse_tree_dump(VALUE self, VALUE source, VALUE filename, VALUE line)
 {
     return parse_tree_common(self, source, filename, line, Qfalse);
 }
 
-void Init_parse_tree(void) 
+void Init_parse_tree(void)
 {
     VALUE c = rb_define_class("ParseTree19", rb_cObject);
-    rb_define_method(c, "parse_tree_for_iseq", 
+    rb_define_method(c, "parse_tree_for_iseq",
 		     (VALUE(*)(ANYARGS))parse_tree_for_iseq, 2);
-    rb_define_method(c, "parse_tree_for_method", 
+    rb_define_method(c, "parse_tree_for_method",
 		     (VALUE(*)(ANYARGS))parse_tree_for_method, 2);
-    rb_define_method(c, "parse_tree_for_str", 
+    rb_define_method(c, "parse_tree_for_str",
 		     (VALUE(*)(ANYARGS))parse_tree_for_str, 3);
-    rb_define_method(c, "parse_tree_dump", 
+    rb_define_method(c, "parse_tree_dump",
 		     (VALUE(*)(ANYARGS))parse_tree_dump, 3);
 }
